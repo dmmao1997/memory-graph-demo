@@ -444,7 +444,11 @@ function setupToggle() {
     });
 
     if (mode === "list") {
+      // 强制显示列表，不用 CSS 类，直接改 style
       document.body.dataset.view = "list";
+      const lv = document.getElementById("listView");
+      lv.style.display = "flex";
+      lv.style.zIndex = "999";
       if (selectedNode) closeDetail();
       renderList("basic");
       document.querySelectorAll(".list-tab").forEach(t => {
@@ -452,6 +456,8 @@ function setupToggle() {
       });
     } else {
       document.body.dataset.view = "graph";
+      const lv = document.getElementById("listView");
+      lv.style.display = "none";
     }
   }
 
