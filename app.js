@@ -8,8 +8,8 @@ let viewState = "3d";
 let selectedNode = null;
 let cameraDistance = 12;
 let targetDistance = 12;
-const DIST_3D = 14;
-const DIST_2D = 10;
+const DIST_3D = 18;
+const DIST_2D = 8;
 let cameraAngleX = 0.3, cameraAngleY = 0;
 let targetAngleX = 0.3, targetAngleY = 0;
 let pinchStartDist = 0;
@@ -98,16 +98,16 @@ function buildSceneGraph() {
     nodeOriginalPos.set(node.id, pos.clone());
   });
 
-  // 2D：压扁成 XY 平面圆盘，缩小到占屏幕 ~1/2
-  // 我在中心(r=0)，事件环 r=1.2，实体环 r=2.2
+  // 2D：压扁成 XY 平面圆盘，放大到占屏幕 ~2/3
+  // 我在中心(r=0)，事件环 r=1.8，实体环 r=3.2
   node2DTarget.set(selfNode.id, new THREE.Vector3(0, 0, 0));
   eventNodes.forEach((node, i) => {
     const angle = (i / eventNodes.length) * Math.PI * 2;
-    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 1.2, Math.sin(angle) * 1.2, 0));
+    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 1.8, Math.sin(angle) * 1.8, 0));
   });
   entityNodes.forEach((node, i) => {
     const angle = (i / entityNodes.length) * Math.PI * 2 + 0.35;
-    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 2.2, Math.sin(angle) * 2.2, 0));
+    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 3.2, Math.sin(angle) * 3.2, 0));
   });
 
   // 连线
@@ -443,11 +443,14 @@ function setupToggle() {
 
     if (mode === "list") {
       document.body.dataset.view = "list";
-      closeDetail();
-      renderList("basic");
-      document.querySelectorAll(".list-tab").forEach(t => {
-        t.classList.toggle("active", t.dataset.tab === "basic");
-      });
+      if (selectedNode) closeDetail();
+      // 强制触发渲染
+      setTimeout(() => {
+        renderList("basic");
+        document.querySelectorAll(".list-tab").forEach(t => {
+          t.classList.toggle("active", t.dataset.tab === "basic");
+        });
+      }, 50);
     } else {
       document.body.dataset.view = "graph";
     }
