@@ -448,7 +448,7 @@ function setupToggle() {
       document.body.dataset.view = "list";
       const lv = document.getElementById("listView");
       lv.style.display = "flex";
-      lv.style.zIndex = "999";
+      lv.style.zIndex = "50";
       if (selectedNode) closeDetail();
       renderList("basic");
       document.querySelectorAll(".list-tab").forEach(t => {

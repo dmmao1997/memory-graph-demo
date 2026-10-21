@@ -55,7 +55,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 100;
+  z-index: 999;
+  background: linear-gradient(to bottom, var(--bg) 0%, rgba(26, 35, 50, 0.85) 60%, transparent 100%);
 }
 .header-title {
   font-size: 17px;
