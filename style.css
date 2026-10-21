@@ -1,18 +1,17 @@
-/* ─── 记忆星图 · Deep Space Design ──────────────────────────── */
+/* ─── 记忆星图 · 完全按参考图 ───────────────────────────────── */
 
 :root {
-  --bg-deep: #0a1628;
-  --bg-panel: rgba(15, 30, 55, 0.95);
-  --accent-cyan: #00d4aa;
-  --accent-blue: #4a9eff;
-  --accent-pink: #ff6b9d;
-  --accent-gold: #ffd166;
-  --accent-purple: #a78bfa;
-  --accent-gray: #6b7280;
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-subtle: rgba(148, 163, 184, 0.12);
+  --bg: #1a2332;
+  --node-fill: rgba(30, 45, 70, 0.75);
+  --node-stroke: rgba(255, 255, 255, 0.7);
+  --node-text: #e8ecf4;
+  --line: rgba(255, 255, 255, 0.18);
+  --accent: #4a9eff;
+  --panel-bg: rgba(25, 35, 55, 0.92);
+  --text-primary: #e8ecf4;
+  --text-secondary: #8b9bb4;
+  --text-muted: #5a6a84;
+  --border: rgba(255, 255, 255, 0.1);
 }
 
 * {
@@ -27,13 +26,13 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
-  background: var(--bg-deep);
+  background: var(--bg);
   color: var(--text-primary);
   position: fixed;
   overscroll-behavior: none;
 }
 
-/* ─── Canvas ─────────────────────────────────────────────────── */
+/* ─── Canvas ─── */
 #canvas-container {
   position: fixed;
   top: 0;
@@ -42,203 +41,170 @@ html, body {
   height: 100%;
   z-index: 1;
 }
-
 #canvas-container canvas {
   display: block;
 }
 
-/* ─── Header ─────────────────────────────────────────────────── */
+/* ─── Header ─── */
 .header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px 16px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 100;
-  transition: opacity 0.3s ease, transform 0.3s ease;
 }
-
-.header.hidden {
-  opacity: 0;
-  transform: translateY(-20px);
-  pointer-events: none;
-}
-
 .header-title {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
 }
 
-/* ─── Toggle ─────────────────────────────────────────────────── */
+/* ─── Toggle ─── */
 .toggle-wrapper {
   display: flex;
-  background: rgba(30, 50, 80, 0.7);
-  border-radius: 18px;
-  padding: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 2px;
   position: relative;
-  border: 1px solid var(--border-subtle);
-  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
 }
-
 .toggle-option {
-  padding: 6px 16px;
-  font-size: 13px;
+  padding: 5px 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
   position: relative;
   z-index: 2;
-  transition: color 0.3s ease;
-  border-radius: 15px;
+  transition: color 0.25s ease;
+  border-radius: 14px;
 }
-
 .toggle-option.active {
-  color: #0a1628;
+  color: #1a2332;
 }
-
 .toggle-slider {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: calc(50% - 3px);
-  height: calc(100% - 6px);
-  background: var(--accent-cyan);
-  border-radius: 15px;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  background: var(--text-primary);
+  border-radius: 14px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 1;
 }
-
 .toggle-wrapper[data-mode="list"] .toggle-slider {
   transform: translateX(100%);
 }
 
-/* ─── Detail Panel ──────────────────────────────────────────── */
+/* ─── Detail Panel ─── */
 .detail-panel {
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 90px;
-  background: var(--bg-panel);
-  border-radius: 18px;
-  padding: 18px 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 72px;
+  background: var(--panel-bg);
+  border-radius: 16px;
+  padding: 20px;
   z-index: 200;
-  backdrop-filter: blur(30px);
-  border: 1px solid var(--border-subtle);
-  transform: translateY(130%);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  transform: translateY(140%);
   opacity: 0;
-  transition: transform 0.45s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.35s ease;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
 }
-
 .detail-panel.visible {
   transform: translateY(0);
   opacity: 1;
 }
-
 .detail-handle {
-  width: 32px;
+  width: 28px;
   height: 3px;
-  background: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
   margin: 0 auto 14px;
 }
-
 .detail-close {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   cursor: pointer;
 }
-
 .detail-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 10px;
 }
-
 .detail-avatar {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--accent-cyan);
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  color: #0a1628;
+  color: #fff;
   flex-shrink: 0;
 }
-
 .detail-name {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   margin-bottom: 3px;
 }
-
 .detail-category {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 5px;
   display: inline-block;
+  background: rgba(74, 158, 255, 0.15);
+  color: var(--accent);
 }
-
 .detail-desc {
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
-
-.detail-category.cat-self { background: rgba(0, 212, 170, 0.15); color: var(--accent-cyan); }
-.detail-category.cat-person { background: rgba(74, 158, 255, 0.15); color: var(--accent-blue); }
-.detail-category.cat-event { background: rgba(255, 107, 157, 0.15); color: var(--accent-pink); }
-.detail-category.cat-place { background: rgba(255, 209, 102, 0.15); color: var(--accent-gold); }
-.detail-category.cat-item { background: rgba(167, 139, 250, 0.15); color: var(--accent-purple); }
-.detail-category.cat-other { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
-
 .detail-fields {
   display: none;
   flex-direction: column;
 }
-
 .detail-fields.visible {
   display: flex;
 }
-
 .detail-field {
   display: flex;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
 }
-
 .detail-field:last-child {
   border-bottom: none;
 }
-
 .detail-field-label {
-  width: 72px;
+  width: 68px;
   font-size: 12px;
   color: var(--text-muted);
   flex-shrink: 0;
 }
-
 .detail-field-value {
   flex: 1;
   font-size: 13px;
@@ -246,36 +212,32 @@ html, body {
   font-weight: 500;
 }
 
-/* ─── Swipe Hint ────────────────────────────────────────────── */
+/* ─── Swipe Hint ─── */
 .swipe-hint {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border);
 }
-
 .swipe-arrow {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-muted);
   animation: swipePulse 2s ease-in-out infinite;
 }
-
 .swipe-arrow:last-child { animation-delay: 1s; }
-
 @keyframes swipePulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 1; }
 }
-
 .swipe-text {
   font-size: 10px;
   color: var(--text-muted);
 }
 
-/* ─── List View ─────────────────────────────────────────────── */
+/* ─── List View ─── */
 .list-view {
   position: fixed;
   top: 0;
@@ -285,156 +247,134 @@ html, body {
   z-index: 50;
   display: none;
   flex-direction: column;
-  background: var(--bg-deep);
-  padding: calc(env(safe-area-inset-top, 0px) + 70px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  background: var(--bg);
+  padding: calc(env(safe-area-inset-top, 0px) + 60px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
-
 .list-view.visible {
   display: flex;
 }
-
 .list-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 12px;
   flex-shrink: 0;
 }
-
 .list-tab {
   flex: 1;
   text-align: center;
-  padding: 9px 0;
+  padding: 8px 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-  background: rgba(30, 50, 80, 0.5);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
   border: 1px solid transparent;
 }
-
 .list-tab.active {
-  color: var(--accent-cyan);
-  background: rgba(0, 212, 170, 0.08);
-  border-color: rgba(0, 212, 170, 0.15);
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.08);
+  border-color: rgba(74, 158, 255, 0.12);
 }
-
 .list-content {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-
 .list-content::-webkit-scrollbar {
   display: none;
 }
-
 .list-item {
-  background: var(--bg-panel);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 8px;
-  border: 1px solid var(--border-subtle);
-  animation: slideUp 0.35s ease forwards;
+  border: 1px solid var(--border);
+  animation: slideUp 0.3s ease forwards;
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(6px);
 }
-
 @keyframes slideUp {
   to { opacity: 1; transform: translateY(0); }
 }
-
 .list-item-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 5px;
 }
-
 .list-item-icon {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
+  background: rgba(74, 158, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   flex-shrink: 0;
 }
-
 .list-item-title {
   font-size: 14px;
   font-weight: 600;
 }
-
 .list-item-value {
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
 }
-
 .list-item-time {
   font-size: 10px;
   color: var(--text-muted);
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
-.icon-self { background: rgba(0, 212, 170, 0.1); }
-.icon-person { background: rgba(74, 158, 255, 0.1); }
-.icon-event { background: rgba(255, 107, 157, 0.1); }
-.icon-place { background: rgba(255, 209, 102, 0.1); }
-.icon-item { background: rgba(167, 139, 250, 0.1); }
-.icon-other { background: rgba(107, 114, 128, 0.1); }
-
-/* ─── Bottom Bar (Graph Mode) ───────────────────────────────── */
+/* ─── Bottom Progress Bar ─── */
 .bottom-bar {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-  left: 50px;
-  right: 50px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+  left: 40px;
+  right: 40px;
   z-index: 90;
-  transition: opacity 0.3s ease;
 }
-
-.bottom-bar.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .bar-track {
   width: 100%;
-  height: 3px;
-  background: rgba(148, 163, 184, 0.15);
-  border-radius: 2px;
-  overflow: hidden;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+  position: relative;
 }
-
 .bar-fill {
   height: 100%;
-  background: var(--accent-cyan);
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 1px;
   width: 100%;
-  transition: width 0.15s ease;
-  box-shadow: 0 0 6px rgba(0, 212, 170, 0.3);
+  transition: width 0.2s ease;
 }
-
+.bar-dot {
+  position: absolute;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  transition: left 0.2s ease;
+}
 .bar-labels {
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
   font-size: 9px;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
-/* ─── View States ───────────────────────────────────────────── */
-/* 图谱模式时隐藏列表 */
+/* ─── View States ─── */
 body[data-view="graph"] .list-view {
   display: none !important;
 }
-
-/* 列表模式时隐藏图谱相关 */
 body[data-view="list"] #canvas-container,
 body[data-view="list"] .detail-panel,
 body[data-view="list"] .bottom-bar {
