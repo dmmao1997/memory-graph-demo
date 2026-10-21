@@ -8,8 +8,8 @@ let viewState = "3d";
 let selectedNode = null;
 let cameraDistance = 12;
 let targetDistance = 12;
-const DIST_3D = 12;
-const DIST_2D = 7;
+const DIST_3D = 14;
+const DIST_2D = 10;
 let cameraAngleX = 0.3, cameraAngleY = 0;
 let targetAngleX = 0.3, targetAngleY = 0;
 let pinchStartDist = 0;
@@ -98,16 +98,16 @@ function buildSceneGraph() {
     nodeOriginalPos.set(node.id, pos.clone());
   });
 
-  // 2D：所有节点在 XY 平面，按角度排成一列可左右滑
-  // 我在中心(r=0)，事件环 r=2，实体环 r=3.5
+  // 2D：压扁成 XY 平面圆盘，缩小到占屏幕 ~1/2
+  // 我在中心(r=0)，事件环 r=1.2，实体环 r=2.2
   node2DTarget.set(selfNode.id, new THREE.Vector3(0, 0, 0));
   eventNodes.forEach((node, i) => {
     const angle = (i / eventNodes.length) * Math.PI * 2;
-    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 2, Math.sin(angle) * 2, 0));
+    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 1.2, Math.sin(angle) * 1.2, 0));
   });
   entityNodes.forEach((node, i) => {
     const angle = (i / entityNodes.length) * Math.PI * 2 + 0.35;
-    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 3.5, Math.sin(angle) * 3.5, 0));
+    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 2.2, Math.sin(angle) * 2.2, 0));
   });
 
   // 连线
@@ -489,7 +489,7 @@ function animate() {
   cameraDistance += (targetDistance - cameraDistance) * 0.06;
   cameraAngleX += (targetAngleX - cameraAngleX) * 0.06;
   cameraAngleY += (targetAngleY - cameraAngleY) * 0.06;
-  transitionProgress += (targetTransition - transitionProgress) * 0.05;
+  transitionProgress += (targetTransition - transitionProgress) * 0.12;
   offsetX += (targetOffsetX - offsetX) * 0.08;
 
   if (targetTransition === 1) {
@@ -509,10 +509,15 @@ function animate() {
     const orig = nodeOriginalPos.get(id);
     const target = node2DTarget.get(id);
     if (orig && target) {
-      // 2D 位置加上水平偏移（滑动浏览）
       const pos = new THREE.Vector3().lerpVectors(orig, target, t);
-      pos.x += offsetX * t; // 只有 2D 时才偏移
+      pos.x += offsetX * t;
+      // 2D 时强制 Z=0，确保完全平面
+      pos.z *= (1 - t);
       group.position.copy(pos);
+      // 2D 时所有节点面向相机
+      if (t > 0.5) {
+        group.rotation.set(0, 0, 0);
+      }
     }
 
     // 2D 时中间节点放大
