@@ -1,4 +1,4 @@
-/* ─── 记忆星图 · 完全按参考图 ───────────────────────────────── */
+/* ─── 记忆星图 · 手机端优先 ─────────────────────────────────── */
 
 :root {
   --bg: #1a2332;
@@ -7,11 +7,11 @@
   --node-text: #e8ecf4;
   --line: rgba(255, 255, 255, 0.18);
   --accent: #4a9eff;
-  --panel-bg: rgba(25, 35, 55, 0.92);
+  --panel-bg: rgba(25, 35, 55, 0.95);
   --text-primary: #e8ecf4;
   --text-secondary: #8b9bb4;
   --text-muted: #5a6a84;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -51,32 +51,31 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 999;
-  background: linear-gradient(to bottom, var(--bg) 0%, rgba(26, 35, 50, 0.85) 60%, transparent 100%);
+  background: linear-gradient(to bottom, var(--bg) 0%, rgba(26, 35, 50, 0.8) 60%, transparent 100%);
 }
 .header-title {
   font-size: 17px;
   font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: -0.2px;
 }
 
 /* ─── Toggle ─── */
 .toggle-wrapper {
   display: flex;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 16px;
   padding: 2px;
   position: relative;
   border: 1px solid var(--border);
 }
 .toggle-option {
-  padding: 5px 14px;
-  font-size: 12px;
+  padding: 6px 16px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -84,6 +83,9 @@ html, body {
   z-index: 2;
   transition: color 0.25s ease;
   border-radius: 14px;
+  /* 手机端增大触控区域 */
+  min-width: 52px;
+  text-align: center;
 }
 .toggle-option.active {
   color: #1a2332;
@@ -106,9 +108,9 @@ html, body {
 /* ─── Detail Panel ─── */
 .detail-panel {
   position: fixed;
-  left: 20px;
-  right: 20px;
-  bottom: 72px;
+  left: 16px;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 68px);
   background: var(--panel-bg);
   border-radius: 16px;
   padding: 20px;
@@ -118,71 +120,79 @@ html, body {
   transform: translateY(140%);
   opacity: 0;
   transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
+  /* 手机端最大高度限制 */
+  max-height: 55vh;
+  overflow-y: auto;
 }
 .detail-panel.visible {
   transform: translateY(0);
   opacity: 1;
 }
+.detail-panel::-webkit-scrollbar {
+  display: none;
+}
 .detail-handle {
-  width: 28px;
-  height: 3px;
+  width: 32px;
+  height: 4px;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
-  margin: 0 auto 14px;
+  margin: 0 auto 16px;
+  flex-shrink: 0;
 }
 .detail-close {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-secondary);
   cursor: pointer;
+  /* 手机端触控更大 */
 }
 .detail-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 14px;
+  margin-bottom: 12px;
 }
 .detail-avatar {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
 }
 .detail-name {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 .detail-category {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 5px;
+  padding: 3px 10px;
+  border-radius: 6px;
   display: inline-block;
   background: rgba(74, 158, 255, 0.15);
   color: var(--accent);
 }
 .detail-desc {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 12px;
+  line-height: 1.65;
+  margin-bottom: 16px;
 }
 .detail-fields {
   display: none;
@@ -194,21 +204,21 @@ html, body {
 .detail-field {
   display: flex;
   align-items: center;
-  padding: 9px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 .detail-field:last-child {
   border-bottom: none;
 }
 .detail-field-label {
-  width: 68px;
-  font-size: 12px;
+  width: 80px;
+  font-size: 14px;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 .detail-field-value {
   flex: 1;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-primary);
   font-weight: 500;
 }
@@ -218,13 +228,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
+  flex-shrink: 0;
 }
 .swipe-arrow {
-  font-size: 16px;
+  font-size: 20px;
   color: var(--text-muted);
   animation: swipePulse 2s ease-in-out infinite;
 }
@@ -234,7 +245,7 @@ html, body {
   50% { opacity: 1; }
 }
 .swipe-text {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -249,26 +260,26 @@ html, body {
   display: none;
   flex-direction: column;
   background: var(--bg);
-  padding: calc(env(safe-area-inset-top, 0px) + 60px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding: calc(env(safe-area-inset-top, 0px) + 62px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
 .list-view.visible {
   display: flex;
 }
 .list-tabs {
   display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 14px;
   flex-shrink: 0;
 }
 .list-tab {
   flex: 1;
   text-align: center;
-  padding: 8px 0;
-  font-size: 13px;
+  padding: 12px 0;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 9px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
@@ -288,52 +299,47 @@ html, body {
 }
 .list-item {
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 8px;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 10px;
   border: 1px solid var(--border);
-  opacity: 1;
-  transform: translateY(0);
-}
-@keyframes slideUp {
-  to { opacity: 1; transform: translateY(0); }
 }
 .list-item-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 5px;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 .list-item-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: rgba(74, 158, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 .list-item-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 .list-item-value {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 .list-item-time {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 /* ─── Bottom Progress Bar ─── */
 .bottom-bar {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
   left: 40px;
   right: 40px;
   z-index: 90;
@@ -341,13 +347,13 @@ html, body {
 .bar-track {
   width: 100%;
   height: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 1px;
   position: relative;
 }
 .bar-fill {
   height: 100%;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 1px;
   width: 100%;
   transition: width 0.2s ease;
@@ -366,9 +372,8 @@ html, body {
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text-muted);
-  letter-spacing: 0.3px;
 }
 
 /* ─── View States ─── */
@@ -379,4 +384,56 @@ body[data-view="list"] #canvas-container,
 body[data-view="list"] .detail-panel,
 body[data-view="list"] .bottom-bar {
   display: none;
+}
+
+/* ─── 手机端横屏适配 ─── */
+@media (max-height: 500px) {
+  .detail-panel {
+    max-height: 70vh;
+    bottom: 50px;
+  }
+  .detail-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+  .detail-name {
+    font-size: 18px;
+  }
+  .detail-field {
+    padding: 8px 0;
+  }
+}
+
+/* ─── 手机端小屏适配 (iPhone SE/mini) ─── */
+@media (max-width: 375px) {
+  .header-title {
+    font-size: 15px;
+  }
+  .toggle-option {
+    padding: 5px 12px;
+    font-size: 12px;
+    min-width: 44px;
+  }
+  .detail-panel {
+    left: 12px;
+    right: 12px;
+    bottom: 56px;
+    padding: 16px;
+  }
+  .detail-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  .detail-name {
+    font-size: 19px;
+  }
+  .list-tab {
+    padding: 10px 0;
+    font-size: 13px;
+  }
+  .list-item {
+    padding: 14px;
+  }
 }

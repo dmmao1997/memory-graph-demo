@@ -6,12 +6,36 @@ let nodeMeshes = [], edgeLines = [];
 let currentMode = "graph";
 let viewState = "3d";
 let selectedNode = null;
-let cameraDistance = 12;
-let targetDistance = 12;
-const DIST_3D = 18;
-const DIST_2D = 8;
-let cameraAngleX = 0.3, cameraAngleY = 0;
-let targetAngleX = 0.3, targetAngleY = 0;
+// 判断手机端
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 500;
+
+// 手机端适配参数
+const MOBILE = {
+  DIST_3D: 22,      // 更远，全局感
+  DIST_2D: 9,       // 2D 也不太远
+  nodeScale: 1.6,   // 节点放大倍数
+  textScale: 1.8,   // 文字放大倍数
+  fov: 65           // 视野更宽
+};
+
+const DESKTOP = {
+  DIST_3D: 18,
+  DIST_2D: 8,
+  nodeScale: 1.0,
+  textScale: 1.0,
+  fov: 55
+};
+
+const CFG = isMobile ? MOBILE : DESKTOP;
+
+let cameraDistance = CFG.DIST_3D;
+let targetDistance = CFG.DIST_3D;
+const DIST_3D = CFG.DIST_3D;
+const DIST_2D = CFG.DIST_2D;
+let cameraAngleX = isMobile ? 0.2 : 0.3;
+let targetAngleX = isMobile ? 0.2 : 0.3;
+let cameraAngleY = 0;
+let targetAngleY = 0;
 let pinchStartDist = 0;
 let touchStartX = 0, touchStartY = 0;
 let touchStartTime = 0;
@@ -34,7 +58,7 @@ function init() {
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x1a2332, 0.008);
 
-  camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(CFG.fov, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, cameraDistance);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -129,9 +153,10 @@ function buildSceneGraph() {
 function createNodeMesh(node, radius, isSelf = false) {
   const group = new THREE.Group();
   const color = CATEGORIES[node.type]?.color || "#6b7280";
+  const r = radius * CFG.nodeScale; // 手机端节点更大
 
   // 3D：彩色发光球体
-  const sphereGeo = new THREE.SphereGeometry(radius, 20, 20);
+  const sphereGeo = new THREE.SphereGeometry(r, 20, 20);
   const sphereMat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(color),
     transparent: true,
@@ -141,7 +166,7 @@ function createNodeMesh(node, radius, isSelf = false) {
   group.add(sphere);
 
   // 3D 光晕
-  const glowGeo = new THREE.SphereGeometry(radius * 1.3, 16, 16);
+  const glowGeo = new THREE.SphereGeometry(r * 1.3, 16, 16);
   const glowMat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(color),
     transparent: true,
@@ -151,7 +176,7 @@ function createNodeMesh(node, radius, isSelf = false) {
   group.add(new THREE.Mesh(glowGeo, glowMat));
 
   // 2D：白边圆环
-  const ringGeo = new THREE.RingGeometry(radius * 0.82, radius, 32);
+  const ringGeo = new THREE.RingGeometry(r * 0.82, r, 32);
   const ringMat = new THREE.MeshBasicMaterial({
     color: 0xffffff, transparent: true, opacity: 0.65, side: THREE.DoubleSide
   });
@@ -159,7 +184,7 @@ function createNodeMesh(node, radius, isSelf = false) {
   group.add(ring);
 
   // 2D：深色填充
-  const fillGeo = new THREE.CircleGeometry(radius * 0.82, 32);
+  const fillGeo = new THREE.CircleGeometry(r * 0.82, 32);
   const fillMat = new THREE.MeshBasicMaterial({
     color: 0x1e2d46, transparent: true, opacity: 0.88, side: THREE.DoubleSide
   });
@@ -168,12 +193,12 @@ function createNodeMesh(node, radius, isSelf = false) {
   group.add(fill);
 
   // 文字
-  const textSprite = createInnerTextSprite(node.name, radius, color);
+  const textSprite = createInnerTextSprite(node.name, r, color);
   textSprite.position.z = 0.01;
   group.add(textSprite);
 
   // 点击检测
-  const hitGeo = new THREE.SphereGeometry(radius, 8, 8);
+  const hitGeo = new THREE.SphereGeometry(r, 8, 8);
   const hitMat = new THREE.MeshBasicMaterial({ visible: false });
   group.add(new THREE.Mesh(hitGeo, hitMat));
 
@@ -187,7 +212,8 @@ function createInnerTextSprite(text, radius, color = "#e8ecf4") {
   const size = 128;
   canvas.width = size;
   canvas.height = size;
-  const fontSize = text.length <= 2 ? 36 : text.length <= 4 ? 26 : 20;
+  const baseFont = text.length <= 2 ? 36 : text.length <= 4 ? 26 : 20;
+  const fontSize = baseFont * CFG.textScale;
   ctx.font = `bold ${fontSize}px PingFang SC, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -197,7 +223,7 @@ function createInnerTextSprite(text, radius, color = "#e8ecf4") {
   const texture = new THREE.CanvasTexture(canvas);
   const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(mat);
-  const s = radius * 1.5;
+  const s = radius * 1.5 * CFG.textScale;
   sprite.scale.set(s, s, 1);
   return sprite;
 }
