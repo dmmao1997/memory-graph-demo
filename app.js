@@ -125,16 +125,40 @@ function buildSceneGraph() {
   });
 }
 
-// ─── 节点样式：白边圆环 + 深色填充 + 内部文字 ─────────────────
+// ─── 节点样式：3D=彩色球体，2D=白边圆盘 ─────────────────────
 function createNodeMesh(node, radius, isSelf = false) {
   const group = new THREE.Group();
+  const color = CATEGORIES[node.type]?.color || "#6b7280";
 
+  // 3D：彩色发光球体
+  const sphereGeo = new THREE.SphereGeometry(radius, 20, 20);
+  const sphereMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(color),
+    transparent: true,
+    opacity: 0.9
+  });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  group.add(sphere);
+
+  // 3D 光晕
+  const glowGeo = new THREE.SphereGeometry(radius * 1.3, 16, 16);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(color),
+    transparent: true,
+    opacity: 0.15,
+    side: THREE.BackSide
+  });
+  group.add(new THREE.Mesh(glowGeo, glowMat));
+
+  // 2D：白边圆环
   const ringGeo = new THREE.RingGeometry(radius * 0.82, radius, 32);
   const ringMat = new THREE.MeshBasicMaterial({
     color: 0xffffff, transparent: true, opacity: 0.65, side: THREE.DoubleSide
   });
-  group.add(new THREE.Mesh(ringGeo, ringMat));
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  group.add(ring);
 
+  // 2D：深色填充
   const fillGeo = new THREE.CircleGeometry(radius * 0.82, 32);
   const fillMat = new THREE.MeshBasicMaterial({
     color: 0x1e2d46, transparent: true, opacity: 0.88, side: THREE.DoubleSide
@@ -143,20 +167,21 @@ function createNodeMesh(node, radius, isSelf = false) {
   fill.position.z = 0.001;
   group.add(fill);
 
-  const textSprite = createInnerTextSprite(node.name, radius);
+  // 文字
+  const textSprite = createInnerTextSprite(node.name, radius, color);
   textSprite.position.z = 0.01;
   group.add(textSprite);
 
-  group.userData = { ...node, baseRadius: radius, isSelf };
-
+  // 点击检测
   const hitGeo = new THREE.SphereGeometry(radius, 8, 8);
   const hitMat = new THREE.MeshBasicMaterial({ visible: false });
   group.add(new THREE.Mesh(hitGeo, hitMat));
 
+  group.userData = { ...node, baseRadius: radius, isSelf };
   return group;
 }
 
-function createInnerTextSprite(text, radius) {
+function createInnerTextSprite(text, radius, color = "#e8ecf4") {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   const size = 128;
@@ -166,7 +191,7 @@ function createInnerTextSprite(text, radius) {
   ctx.font = `bold ${fontSize}px PingFang SC, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "#e8ecf4";
+  ctx.fillStyle = color;
   ctx.fillText(text, size / 2, size / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -343,11 +368,20 @@ function checkNodeTap(x, y) {
 function selectNode(group) {
   selectedNode = group;
   const data = group.userData;
+  const t = easeInOut(transitionProgress);
+  const is3D = t < 0.5;
 
   nodeMeshes.forEach(g => {
     const isSel = g === group;
-    g.children[0].material.opacity = isSel ? 1 : 0.25;
-    g.children[1].material.opacity = isSel ? 0.95 : 0.4;
+    if (is3D) {
+      // 3D：球体高亮
+      g.children[0].material.opacity = isSel ? 1 : 0.15;
+      g.children[1].material.opacity = isSel ? 0.25 : 0.05;
+    } else {
+      // 2D：圆盘高亮
+      g.children[2].material.opacity = isSel ? 1 : 0.2;
+      g.children[3].material.opacity = isSel ? 0.95 : 0.3;
+    }
   });
   edgeLines.forEach(l => {
     l.material.opacity = (l.userData.fromId === data.id || l.userData.toId === data.id) ? 0.5 : 0.06;
@@ -378,9 +412,16 @@ function selectNode(group) {
 function closeDetail() {
   selectedNode = null;
   document.getElementById("detailPanel").classList.remove("visible");
+  const t = easeInOut(transitionProgress);
+  const is3D = t < 0.5;
   nodeMeshes.forEach(g => {
-    g.children[0].material.opacity = 0.65;
-    g.children[1].material.opacity = 0.88;
+    if (is3D) {
+      g.children[0].material.opacity = 0.9;
+      g.children[1].material.opacity = 0.15;
+    } else {
+      g.children[2].material.opacity = 0.65;
+      g.children[3].material.opacity = 0.88;
+    }
   });
   edgeLines.forEach(l => { l.material.opacity = 0.15; });
 }
@@ -411,10 +452,12 @@ function navigateNode(direction) {
   if (connected.length === 0) return;
 
   const neighborIds = connected.map(e => e.from === currentId ? e.to : e.from);
-  // 找到当前 neighbor index
+  // 简化：直接用 selectedNode 的 id 找 index
   const curIdx = neighborIds.findIndex(id => {
     const m = nodeMeshes.find(g => g.userData.id === id);
-    return m && m.children[0].material.opacity > 0.5;
+    if (!m) return false;
+    // 判断是否高亮（无论 3D 球体还是 2D 圆盘）
+    return m.children[0].material.opacity > 0.5 || m.children[2].material.opacity > 0.5;
   });
 
   const nextIdx = direction === "next"
@@ -527,16 +570,40 @@ function animate() {
     if (orig && target) {
       const pos = new THREE.Vector3().lerpVectors(orig, target, t);
       pos.x += offsetX * t;
-      // 2D 时强制 Z=0，确保完全平面
       pos.z *= (1 - t);
       group.position.copy(pos);
-      // 2D 时所有节点面向相机
-      if (t > 0.5) {
-        group.rotation.set(0, 0, 0);
-      }
+      if (t > 0.5) group.rotation.set(0, 0, 0);
     }
 
-    // 2D 时中间节点放大
+    // ── 形态过渡：3D=球体可见，2D=圆盘可见 ──
+    const sphere = group.children[0];  // 彩色球体
+    const glow = group.children[1];    // 光晕
+    const ring = group.children[2];    // 白边圆环
+    const fill = group.children[3];    // 深色填充
+    const textSprite = group.children[4]; // 文字
+
+    // 3D 状态 (t=0)：球体可见，圆盘隐藏
+    // 2D 状态 (t=1)：球体隐藏，圆盘可见
+    const opacity3d = 1 - t;
+    const opacity2d = t;
+
+    sphere.material.opacity = 0.9 * opacity3d;
+    sphere.visible = opacity3d > 0.05;
+    glow.material.opacity = 0.15 * opacity3d;
+    glow.visible = opacity3d > 0.05;
+
+    ring.material.opacity = 0.65 * opacity2d;
+    ring.visible = opacity2d > 0.05;
+    fill.material.opacity = 0.88 * opacity2d;
+    fill.visible = opacity2d > 0.05;
+
+    // 文字始终可见，颜色随形态切换
+    // 3D 时用类别颜色，2D 时用白色
+    if (textSprite.material.map) {
+      // 简单处理：始终用白色文字，3D 时球体本身有颜色
+    }
+
+    // 缩放
     if (t > 0.5) {
       const distToCenter = Math.abs(group.position.x);
       const centerScale = Math.max(0.6, 1.2 - distToCenter * 0.15);
