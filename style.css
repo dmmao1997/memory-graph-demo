@@ -372,10 +372,10 @@ html, body {
 
 /* ─── View States ─── */
 body[data-view="graph"] .list-view {
-  display: none !important;
+  display: none;
 }
 body[data-view="list"] #canvas-container,
 body[data-view="list"] .detail-panel,
 body[data-view="list"] .bottom-bar {
-  display: none !important;
+  display: none;
 }

@@ -429,7 +429,9 @@ function navigateNode(direction) {
 function setupToggle() {
   const wrapper = document.getElementById("toggleWrapper");
 
-  wrapper.addEventListener("click", e => {
+  function handleToggle(e) {
+    e.preventDefault();
+    e.stopPropagation();
     const clicked = e.target.closest(".toggle-option");
     if (!clicked) return;
     const mode = clicked.dataset.mode;
@@ -444,26 +446,31 @@ function setupToggle() {
     if (mode === "list") {
       document.body.dataset.view = "list";
       if (selectedNode) closeDetail();
-      // 强制触发渲染
-      setTimeout(() => {
-        renderList("basic");
-        document.querySelectorAll(".list-tab").forEach(t => {
-          t.classList.toggle("active", t.dataset.tab === "basic");
-        });
-      }, 50);
+      renderList("basic");
+      document.querySelectorAll(".list-tab").forEach(t => {
+        t.classList.toggle("active", t.dataset.tab === "basic");
+      });
     } else {
       document.body.dataset.view = "graph";
     }
-  });
+  }
 
-  // 列表 tab — 用事件委托，确保动态元素也能触发
-  document.querySelector(".list-tabs").addEventListener("click", e => {
+  wrapper.addEventListener("click", handleToggle);
+  wrapper.addEventListener("touchend", handleToggle);
+
+  // 列表 tab
+  function handleTab(e) {
+    e.preventDefault();
+    e.stopPropagation();
     const tab = e.target.closest(".list-tab");
     if (!tab) return;
     document.querySelectorAll(".list-tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     renderList(tab.dataset.tab);
-  });
+  }
+
+  document.querySelector(".list-tabs").addEventListener("click", handleTab);
+  document.querySelector(".list-tabs").addEventListener("touchend", handleTab);
 }
 
 function renderList(tab) {
