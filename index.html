@@ -9,25 +9,17 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 3D Canvas Container -->
+  <!-- 3D Canvas -->
   <div id="canvas-container"></div>
 
   <!-- Header -->
-  <div class="header">
+  <div class="header" id="header">
     <div class="header-title">记忆星图</div>
-    <div class="header-subtitle">Memory Atlas</div>
-    <!-- Toggle Switch -->
     <div class="toggle-wrapper" id="toggleWrapper">
       <div class="toggle-option active" data-mode="graph">图谱</div>
       <div class="toggle-option" data-mode="list">列表</div>
       <div class="toggle-slider"></div>
     </div>
-  </div>
-
-  <!-- Hint -->
-  <div class="hint" id="hintText">
-    <span class="hint-icon">◈</span>
-    双指缩放纵览全局 · 点击进入详情
   </div>
 
   <!-- Node Detail Panel -->
@@ -37,18 +29,16 @@
     <div class="detail-header">
       <div class="detail-avatar" id="detailAvatar"></div>
       <div class="detail-title-group">
-        <div class="detail-name" id="detailName">我</div>
-        <div class="detail-category" id="detailCategory">人物</div>
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-category" id="detailCategory"></div>
       </div>
     </div>
-    <div class="detail-desc" id="detailDesc">这是默认中心节点</div>
-    <!-- 6 fields for "我" -->
+    <div class="detail-desc" id="detailDesc"></div>
     <div class="detail-fields" id="detailFields"></div>
-    <!-- Swipe indicator -->
     <div class="swipe-hint">
-      <div class="swipe-arrow left">‹</div>
+      <div class="swipe-arrow">‹</div>
       <div class="swipe-text">左右滑动查看相邻节点</div>
-      <div class="swipe-arrow right">›</div>
+      <div class="swipe-arrow">›</div>
     </div>
   </div>
 
@@ -62,42 +52,14 @@
     <div class="list-content" id="listContent"></div>
   </div>
 
-  <!-- Bottom Slider (Graph Mode) -->
-  <div class="bottom-slider" id="bottomSlider">
-    <div class="slider-track">
-      <div class="slider-fill" id="sliderFill"></div>
+  <!-- Bottom Progress Bar (Graph Mode Only) -->
+  <div class="bottom-bar" id="bottomBar">
+    <div class="bar-track">
+      <div class="bar-fill" id="barFill"></div>
     </div>
-    <div class="slider-labels">
-      <span>纵览</span>
-      <span>详情</span>
-    </div>
-  </div>
-
-  <!-- Legend -->
-  <div class="legend" id="legend">
-    <div class="legend-item">
-      <div class="legend-dot" style="background: #00d4aa;"></div>
-      <span>我</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background: #4a9eff;"></div>
-      <span>人物</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background: #ff6b9d;"></div>
-      <span>事件</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background: #ffd166;"></div>
-      <span>地点</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background: #a78bfa;"></div>
-      <span>物品</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-dot" style="background: #6b7280;"></div>
-      <span>其他</span>
+    <div class="bar-labels">
+      <span>二维详情</span>
+      <span>三维全局</span>
     </div>
   </div>
 
