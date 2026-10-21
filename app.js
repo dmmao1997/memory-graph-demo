@@ -1,4 +1,4 @@
-// ─── 记忆星图 · 按参考图重制 ──────────────────────────────────
+// ─── 记忆星图 · 球状3D + 2D滑动浏览 ───────────────────────────
 
 const { nodes, edges } = buildGraph();
 let scene, camera, renderer, raycaster, mouse;
@@ -6,12 +6,12 @@ let nodeMeshes = [], edgeLines = [];
 let currentMode = "graph";
 let viewState = "3d";
 let selectedNode = null;
-let cameraDistance = 10;
-let targetDistance = 10;
-const DIST_3D = 10;
-const DIST_2D = 6;
-let cameraAngleX = 0, cameraAngleY = 0;
-let targetAngleX = 0, targetAngleY = 0;
+let cameraDistance = 12;
+let targetDistance = 12;
+const DIST_3D = 12;
+const DIST_2D = 7;
+let cameraAngleX = 0.3, cameraAngleY = 0;
+let targetAngleX = 0.3, targetAngleY = 0;
 let pinchStartDist = 0;
 let touchStartX = 0, touchStartY = 0;
 let touchStartTime = 0;
@@ -22,12 +22,17 @@ const node2DTarget = new Map();
 let transitionProgress = 0;
 let targetTransition = 0;
 
+// 2D 滑动浏览
+let current2DIndex = 0;
+let offsetX = 0;
+let targetOffsetX = 0;
+
 // ─── 初始化 ───────────────────────────────────────────────────
 function init() {
   const container = document.getElementById("canvas-container");
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x1a2332, 0.012);
+  scene.fog = new THREE.FogExp2(0x1a2332, 0.008);
 
   camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, cameraDistance);
@@ -52,16 +57,23 @@ function init() {
   animate();
 }
 
-// ─── 建图 ────────────────────────────────────────────────────
+// ─── 球状分布 ────────────────────────────────────────────────
+function fibonacciSphere(i, n, radius) {
+  const phi = Math.acos(1 - 2 * (i + 0.5) / n);
+  const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+  return new THREE.Vector3(
+    radius * Math.sin(phi) * Math.cos(theta),
+    radius * Math.sin(phi) * Math.sin(theta),
+    radius * Math.cos(phi)
+  );
+}
+
 function buildSceneGraph() {
   const selfNode = nodes.find(n => n.type === "self");
   const eventNodes = nodes.filter(n => n.type === "event");
   const entityNodes = nodes.filter(n => !["self", "event"].includes(n.type));
 
-  // 3D 位置
-  const R_EVENT = 3.2;
-  const R_ENTITY = 5.8;
-
+  // 3D：我=中心，事件=球面 r=3.5，实体=球面 r=6
   const selfMesh = createNodeMesh(selfNode, 0.5, true);
   selfMesh.position.set(0, 0, 0);
   scene.add(selfMesh);
@@ -69,41 +81,33 @@ function buildSceneGraph() {
   nodeOriginalPos.set(selfNode.id, selfMesh.position.clone());
 
   eventNodes.forEach((node, i) => {
-    const angle = (i / eventNodes.length) * Math.PI * 2;
-    const mesh = createNodeMesh(node, 0.3);
-    mesh.position.set(
-      Math.cos(angle) * R_EVENT,
-      (Math.random() - 0.5) * 1.6,
-      Math.sin(angle) * R_EVENT
-    );
+    const pos = fibonacciSphere(i, eventNodes.length, 3.5);
+    const mesh = createNodeMesh(node, 0.32);
+    mesh.position.copy(pos);
     scene.add(mesh);
     nodeMeshes.push(mesh);
-    nodeOriginalPos.set(node.id, mesh.position.clone());
+    nodeOriginalPos.set(node.id, pos.clone());
   });
 
   entityNodes.forEach((node, i) => {
-    const angle = (i / entityNodes.length) * Math.PI * 2 + 0.3;
-    const mesh = createNodeMesh(node, 0.22);
-    mesh.position.set(
-      Math.cos(angle) * R_ENTITY,
-      (Math.random() - 0.5) * 3,
-      Math.sin(angle) * R_ENTITY
-    );
+    const pos = fibonacciSphere(i, entityNodes.length, 6);
+    const mesh = createNodeMesh(node, 0.24);
+    mesh.position.copy(pos);
     scene.add(mesh);
     nodeMeshes.push(mesh);
-    nodeOriginalPos.set(node.id, mesh.position.clone());
+    nodeOriginalPos.set(node.id, pos.clone());
   });
 
-  // 2D 目标位置：所有节点挤在中心区域（按参考图）
-  // 我在中心，事件环 r=1.8，实体环 r=3.2，全部在 XY 平面
+  // 2D：所有节点在 XY 平面，按角度排成一列可左右滑
+  // 我在中心(r=0)，事件环 r=2，实体环 r=3.5
   node2DTarget.set(selfNode.id, new THREE.Vector3(0, 0, 0));
   eventNodes.forEach((node, i) => {
     const angle = (i / eventNodes.length) * Math.PI * 2;
-    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 1.8, Math.sin(angle) * 1.8, 0));
+    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 2, Math.sin(angle) * 2, 0));
   });
   entityNodes.forEach((node, i) => {
-    const angle = (i / entityNodes.length) * Math.PI * 2 + 0.3;
-    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 3.2, Math.sin(angle) * 3.2, 0));
+    const angle = (i / entityNodes.length) * Math.PI * 2 + 0.35;
+    node2DTarget.set(node.id, new THREE.Vector3(Math.cos(angle) * 3.5, Math.sin(angle) * 3.5, 0));
   });
 
   // 连线
@@ -121,46 +125,33 @@ function buildSceneGraph() {
   });
 }
 
-// ─── 创建节点：白边圆环 + 深色填充 + 内部文字 ────────────────
+// ─── 节点样式：白边圆环 + 深色填充 + 内部文字 ─────────────────
 function createNodeMesh(node, radius, isSelf = false) {
   const group = new THREE.Group();
 
-  // 外圈：白色描边圆环
-  const ringGeo = new THREE.RingGeometry(radius * 0.85, radius, 32);
+  const ringGeo = new THREE.RingGeometry(radius * 0.82, radius, 32);
   const ringMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.6,
-    side: THREE.DoubleSide
+    color: 0xffffff, transparent: true, opacity: 0.65, side: THREE.DoubleSide
   });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  group.add(ring);
+  group.add(new THREE.Mesh(ringGeo, ringMat));
 
-  // 内圆：深色半透明填充
-  const fillGeo = new THREE.CircleGeometry(radius * 0.85, 32);
+  const fillGeo = new THREE.CircleGeometry(radius * 0.82, 32);
   const fillMat = new THREE.MeshBasicMaterial({
-    color: 0x1e2d46,
-    transparent: true,
-    opacity: 0.85,
-    side: THREE.DoubleSide
+    color: 0x1e2d46, transparent: true, opacity: 0.88, side: THREE.DoubleSide
   });
   const fill = new THREE.Mesh(fillGeo, fillMat);
   fill.position.z = 0.001;
   group.add(fill);
 
-  // 文字：画在圆内部
   const textSprite = createInnerTextSprite(node.name, radius);
   textSprite.position.z = 0.01;
   group.add(textSprite);
 
-  // 让 group 可以被 raycast
   group.userData = { ...node, baseRadius: radius, isSelf };
 
-  // 包一层 sphere 用于点击检测（透明）
   const hitGeo = new THREE.SphereGeometry(radius, 8, 8);
   const hitMat = new THREE.MeshBasicMaterial({ visible: false });
-  const hitMesh = new THREE.Mesh(hitGeo, hitMat);
-  group.add(hitMesh);
+  group.add(new THREE.Mesh(hitGeo, hitMat));
 
   return group;
 }
@@ -171,8 +162,8 @@ function createInnerTextSprite(text, radius) {
   const size = 128;
   canvas.width = size;
   canvas.height = size;
-
-  ctx.font = `bold ${Math.floor(size / (text.length > 3 ? text.length * 1.2 : 4))}px PingFang SC, sans-serif`;
+  const fontSize = text.length <= 2 ? 36 : text.length <= 4 ? 26 : 20;
+  ctx.font = `bold ${fontSize}px PingFang SC, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#e8ecf4";
@@ -181,8 +172,8 @@ function createInnerTextSprite(text, radius) {
   const texture = new THREE.CanvasTexture(canvas);
   const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(mat);
-  const scale = radius * 1.4;
-  sprite.scale.set(scale, scale, 1);
+  const s = radius * 1.5;
+  sprite.scale.set(s, s, 1);
   return sprite;
 }
 
@@ -200,17 +191,22 @@ function setupEvents() {
     touchStartY = e.clientY;
   });
   el.addEventListener("mousemove", e => {
-    if (!wasDragging && e.buttons === 1) {
-      const dx = e.clientX - touchStartX;
-      const dy = e.clientY - touchStartY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) wasDragging = true;
-      if (wasDragging && !selectedNode && viewState === "3d") {
+    if (e.buttons !== 1) return;
+    const dx = e.clientX - touchStartX;
+    const dy = e.clientY - touchStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) wasDragging = true;
+
+    if (!selectedNode) {
+      if (viewState === "3d") {
         targetAngleY += dx * 0.004;
         targetAngleX += dy * 0.004;
         targetAngleX = clamp(targetAngleX, -1.2, 1.2);
-        touchStartX = e.clientX;
-        touchStartY = e.clientY;
+      } else {
+        // 2D 模式：左右滑浏览节点
+        targetOffsetX += dx * 0.015;
       }
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
     }
   });
   el.addEventListener("mouseup", () => {
@@ -258,13 +254,21 @@ function onTouchMove(e) {
       navigateNode(dx > 0 ? "prev" : "next");
       touchStartX = e.touches[0].clientX;
       wasDragging = false;
-    } else if (!selectedNode && viewState === "3d") {
-      targetAngleY += dx * 0.004;
-      targetAngleX += dy * 0.004;
-      targetAngleX = clamp(targetAngleX, -1.2, 1.2);
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
+      return;
     }
+
+    if (!selectedNode) {
+      if (viewState === "3d") {
+        targetAngleY += dx * 0.004;
+        targetAngleX += dy * 0.004;
+        targetAngleX = clamp(targetAngleX, -1.2, 1.2);
+      } else {
+        // 2D：左右滑平移视角浏览节点
+        targetOffsetX += dx * 0.015;
+      }
+    }
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
   } else if (e.touches.length === 2) {
     const dist = getTouchDist(e);
     const delta = pinchStartDist - dist;
@@ -298,7 +302,7 @@ function getTouchDist(e) {
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
-// ─── 视图状态 ────────────────────────────────────────────────
+// ─── 视图切换 ────────────────────────────────────────────────
 function setViewState(state) {
   if (viewState === state) return;
   viewState = state;
@@ -313,6 +317,10 @@ function setViewState(state) {
     if (selectedNode) closeDetail();
     targetAngleX = 0;
     targetAngleY = 0;
+    // 重置 2D 偏移
+    targetOffsetX = 0;
+    offsetX = 0;
+    current2DIndex = 0;
   }
 }
 
@@ -324,15 +332,11 @@ function checkNodeTap(x, y) {
   mouse.y = -(y / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
-
-  // 用 hit mesh 做检测
   const hitMeshes = nodeMeshes.map(g => g.children.find(c => c.geometry?.type === "SphereGeometry"));
   const intersects = raycaster.intersectObjects(hitMeshes);
 
   if (intersects.length > 0) {
-    const hitMesh = intersects[0].object;
-    const group = hitMesh.parent;
-    selectNode(group);
+    selectNode(intersects[0].object.parent);
   }
 }
 
@@ -340,26 +344,17 @@ function selectNode(group) {
   selectedNode = group;
   const data = group.userData;
 
-  // 高亮
   nodeMeshes.forEach(g => {
-    const ring = g.children[0];
-    const fill = g.children[1];
-    if (g === group) {
-      ring.material.opacity = 1;
-      fill.material.opacity = 0.95;
-    } else {
-      ring.material.opacity = 0.3;
-      fill.material.opacity = 0.4;
-    }
+    const isSel = g === group;
+    g.children[0].material.opacity = isSel ? 1 : 0.25;
+    g.children[1].material.opacity = isSel ? 0.95 : 0.4;
   });
   edgeLines.forEach(l => {
     l.material.opacity = (l.userData.fromId === data.id || l.userData.toId === data.id) ? 0.5 : 0.06;
   });
 
-  // 填充面板
   const catLabels = { self: "我", person: "人物", event: "事件", place: "地点", item: "物品", other: "其他" };
   document.getElementById("detailAvatar").textContent = data.name[0];
-  document.getElementById("detailAvatar").style.background = "#4a9eff";
   document.getElementById("detailName").textContent = data.name;
   document.getElementById("detailCategory").textContent = catLabels[data.type] || data.type;
   document.getElementById("detailDesc").textContent = data.desc || "暂无描述";
@@ -383,14 +378,11 @@ function selectNode(group) {
 function closeDetail() {
   selectedNode = null;
   document.getElementById("detailPanel").classList.remove("visible");
-
   nodeMeshes.forEach(g => {
-    g.children[0].material.opacity = 0.6;
-    g.children[1].material.opacity = 0.85;
+    g.children[0].material.opacity = 0.65;
+    g.children[1].material.opacity = 0.88;
   });
-  edgeLines.forEach(l => {
-    l.material.opacity = 0.15;
-  });
+  edgeLines.forEach(l => { l.material.opacity = 0.15; });
 }
 
 // ─── 详情左右滑 ──────────────────────────────────────────────
@@ -403,9 +395,7 @@ function setupDetailSwipe() {
     e.stopPropagation();
   }, { passive: true });
 
-  panel.addEventListener("touchmove", e => {
-    e.stopPropagation();
-  }, { passive: true });
+  panel.addEventListener("touchmove", e => { e.stopPropagation(); }, { passive: true });
 
   panel.addEventListener("touchend", e => {
     e.stopPropagation();
@@ -421,10 +411,15 @@ function navigateNode(direction) {
   if (connected.length === 0) return;
 
   const neighborIds = connected.map(e => e.from === currentId ? e.to : e.from);
-  const idx = neighborIds.indexOf(currentId);
+  // 找到当前 neighbor index
+  const curIdx = neighborIds.findIndex(id => {
+    const m = nodeMeshes.find(g => g.userData.id === id);
+    return m && m.children[0].material.opacity > 0.5;
+  });
+
   const nextIdx = direction === "next"
-    ? ((idx < 0 ? 0 : idx) + 1) % neighborIds.length
-    : ((idx < 0 ? 0 : idx) - 1 + neighborIds.length) % neighborIds.length;
+    ? (curIdx + 1) % neighborIds.length
+    : (curIdx - 1 + neighborIds.length) % neighborIds.length;
 
   const nextGroup = nodeMeshes.find(g => g.userData.id === neighborIds[nextIdx]);
   if (nextGroup) selectNode(nextGroup);
@@ -458,18 +453,23 @@ function setupToggle() {
     }
   });
 
-  document.querySelectorAll(".list-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".list-tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      renderList(tab.dataset.tab);
-    });
+  // 列表 tab — 用事件委托，确保动态元素也能触发
+  document.querySelector(".list-tabs").addEventListener("click", e => {
+    const tab = e.target.closest(".list-tab");
+    if (!tab) return;
+    document.querySelectorAll(".list-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    renderList(tab.dataset.tab);
   });
 }
 
 function renderList(tab) {
   const container = document.getElementById("listContent");
   const items = LIST_DATA[tab];
+  if (!items || items.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#5a6a84;font-size:13px;">暂无数据</div>';
+    return;
+  }
   container.innerHTML = items.map((item, i) => `
     <div class="list-item" style="animation-delay: ${i * 0.03}s">
       <div class="list-item-header">
@@ -490,6 +490,7 @@ function animate() {
   cameraAngleX += (targetAngleX - cameraAngleX) * 0.06;
   cameraAngleY += (targetAngleY - cameraAngleY) * 0.06;
   transitionProgress += (targetTransition - transitionProgress) * 0.05;
+  offsetX += (targetOffsetX - offsetX) * 0.08;
 
   if (targetTransition === 1) {
     targetAngleX *= 0.92;
@@ -508,15 +509,24 @@ function animate() {
     const orig = nodeOriginalPos.get(id);
     const target = node2DTarget.get(id);
     if (orig && target) {
-      group.position.lerpVectors(orig, target, t);
+      // 2D 位置加上水平偏移（滑动浏览）
+      const pos = new THREE.Vector3().lerpVectors(orig, target, t);
+      pos.x += offsetX * t; // 只有 2D 时才偏移
+      group.position.copy(pos);
     }
 
-    // 呼吸
-    const s = 1 + Math.sin(Date.now() * 0.0015 + i * 0.7) * 0.04 * (1 - t);
-    group.scale.setScalar(s);
+    // 2D 时中间节点放大
+    if (t > 0.5) {
+      const distToCenter = Math.abs(group.position.x);
+      const centerScale = Math.max(0.6, 1.2 - distToCenter * 0.15);
+      const breathe = 1 + Math.sin(Date.now() * 0.0015 + i * 0.7) * 0.04 * (1 - t);
+      group.scale.setScalar(breathe * centerScale);
+    } else {
+      const s = 1 + Math.sin(Date.now() * 0.0015 + i * 0.7) * 0.04;
+      group.scale.setScalar(s);
+    }
   });
 
-  // 连线跟随
   edgeLines.forEach(line => {
     const fromG = nodeMeshes.find(g => g.userData.id === line.userData.fromId);
     const toG = nodeMeshes.find(g => g.userData.id === line.userData.toId);
