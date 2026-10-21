@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>记忆星图</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">记忆星图</div>
+    <div class="header-subtitle">Memory Atlas</div>
+    <!-- Toggle Switch -->
+    <div class="toggle-wrapper" id="toggleWrapper">
+      <div class="toggle-option active" data-mode="graph">图谱</div>
+      <div class="toggle-option" data-mode="list">列表</div>
+      <div class="toggle-slider"></div>
+    </div>
+  </div>
+
+  <!-- Hint -->
+  <div class="hint" id="hintText">
+    <span class="hint-icon">◈</span>
+    双指缩放纵览全局 · 点击进入详情
+  </div>
+
+  <!-- Node Detail Panel -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-handle"></div>
+    <div class="detail-close" id="detailClose">×</div>
+    <div class="detail-header">
+      <div class="detail-avatar" id="detailAvatar"></div>
+      <div class="detail-title-group">
+        <div class="detail-name" id="detailName">我</div>
+        <div class="detail-category" id="detailCategory">人物</div>
+      </div>
+    </div>
+    <div class="detail-desc" id="detailDesc">这是默认中心节点</div>
+    <!-- 6 fields for "我" -->
+    <div class="detail-fields" id="detailFields"></div>
+    <!-- Swipe indicator -->
+    <div class="swipe-hint">
+      <div class="swipe-arrow left">‹</div>
+      <div class="swipe-text">左右滑动查看相邻节点</div>
+      <div class="swipe-arrow right">›</div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div class="list-view" id="listView">
+    <div class="list-tabs">
+      <div class="list-tab active" data-tab="basic">基本信息</div>
+      <div class="list-tab" data-tab="preference">用户偏好</div>
+      <div class="list-tab" data-tab="events">事件</div>
+    </div>
+    <div class="list-content" id="listContent"></div>
+  </div>
+
+  <!-- Bottom Slider (Graph Mode) -->
+  <div class="bottom-slider" id="bottomSlider">
+    <div class="slider-track">
+      <div class="slider-fill" id="sliderFill"></div>
+    </div>
+    <div class="slider-labels">
+      <span>纵览</span>
+      <span>详情</span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend" id="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #00d4aa;"></div>
+      <span>我</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #4a9eff;"></div>
+      <span>人物</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #ff6b9d;"></div>
+      <span>事件</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #ffd166;"></div>
+      <span>地点</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #a78bfa;"></div>
+      <span>物品</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #6b7280;"></div>
+      <span>其他</span>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
